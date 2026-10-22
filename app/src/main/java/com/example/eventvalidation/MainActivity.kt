@@ -2,10 +2,12 @@ package com.example.eventvalidation
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.google.android.material.textfield.TextInputEditText
 import com.example.eventvalidation.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -43,36 +45,22 @@ class MainActivity : AppCompatActivity() {
         val msvRegex = Regex("^[A-Za-z0-9]+$")
         val classRegex = Regex("^[A-Za-z0-9]+$")
 
-        if (name.isEmpty() || !name.matches(nameRegex)) {
-            binding.edtName.error = "Họ tên không hợp lệ"
-            binding.edtName.requestFocus()
+        val errorViews = mutableListOf<View>()
+
+        // Kiểm tra và gom lỗi tất cả các trường
+        checkField(binding.edtName, name, nameRegex, "Họ tên không được để trống", "Họ tên không hợp lệ (chỉ chứa chữ cái và khoảng trắng)", errorViews)
+        checkField(binding.edtEmail, email, emailRegex, "Email không được để trống", "Email không hợp lệ", errorViews)
+        checkField(binding.edtPhone, phone, phoneRegex, "Số điện thoại không được để trống", "Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 chữ số", errorViews)
+        checkField(binding.edtMsv, msv, msvRegex, "MSV không được để trống", "MSV chỉ được chứa chữ và số", errorViews)
+        checkField(binding.edtClass, className, classRegex, "Lớp không được để trống", "Lớp chỉ được chứa chữ và số", errorViews)
+
+        // Nếu có trường nào lỗi, focus vào trường lỗi đầu tiên và dừng lại
+        if (errorViews.isNotEmpty()) {
+            errorViews.first().requestFocus()
             return
         }
 
-        if (email.isEmpty() || !email.matches(emailRegex)) {
-            binding.edtEmail.error = "Email không hợp lệ"
-            binding.edtEmail.requestFocus()
-            return
-        }
-
-        if (phone.isEmpty() || !phone.matches(phoneRegex)) {
-            binding.edtPhone.error = "Số điện thoại phải bắt đầu bằng 0 và gồm 10 chữ số"
-            binding.edtPhone.requestFocus()
-            return
-        }
-
-        if (msv.isEmpty() || !msv.matches(msvRegex)) {
-            binding.edtMsv.error = "MSV chỉ được chứa chữ và số"
-            binding.edtMsv.requestFocus()
-            return
-        }
-
-        if (className.isEmpty() || !className.matches(classRegex)) {
-            binding.edtClass.error = "Lớp chỉ được chứa chữ và số"
-            binding.edtClass.requestFocus()
-            return
-        }
-
+        // Tất cả hợp lệ -> Chuyển sang DetailActivity
         val intent = Intent(this, DetailActivity::class.java).apply {
             putExtra("EXTRA_NAME", name)
             putExtra("EXTRA_EMAIL", email)
@@ -81,5 +69,27 @@ class MainActivity : AppCompatActivity() {
             putExtra("EXTRA_CLASS", className)
         }
         startActivity(intent)
+    }
+
+    /**
+     * Hàm dùng chung để validate từng trường và gom danh sách các View bị lỗi.
+     */
+    private fun checkField(
+        editText: TextInputEditText,
+        value: String,
+        regex: Regex,
+        emptyMessage: String,
+        invalidMessage: String,
+        errorList: MutableList<View>
+    ) {
+        if (value.isEmpty()) {
+            editText.error = emptyMessage
+            errorList.add(editText)
+        } else if (!value.matches(regex)) {
+            editText.error = invalidMessage
+            errorList.add(editText)
+        } else {
+            editText.error = null
+        }
     }
 }
